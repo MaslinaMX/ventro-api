@@ -22,13 +22,23 @@ class CategoriaController extends Controller
             'nombre' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],
             'parent_id' => ['nullable', 'exists:categorias,id'],
+            'icono' => ['nullable', 'string', 'max:50'],
+            'color' => ['nullable', 'string', 'max:7'],
         ]);
+
+        $slug = Str::slug($request->nombre);
+        $existente = Categoria::where('slug', $slug)->first();
+        if ($existente) {
+            return response()->json($existente, 200); // ya existe, regrésala tal cual
+        }
 
         $categoria = Categoria::create([
             'nombre' => $request->nombre,
-            'slug' => Str::slug($request->nombre),
+            'slug' => $slug,
             'descripcion' => $request->descripcion,
             'parent_id' => $request->parent_id,
+            'icono' => $request->icono,
+            'color' => $request->color,
             'activo' => true,
         ]);
 
@@ -49,6 +59,8 @@ class CategoriaController extends Controller
         $request->validate([
             'nombre' => ['sometimes', 'string'],
             'descripcion' => ['nullable', 'string'],
+            'icono' => ['nullable', 'string', 'max:50'],
+            'color' => ['nullable', 'string', 'max:7'],
             'activo' => ['sometimes', 'boolean'],
         ]);
 
@@ -56,7 +68,7 @@ class CategoriaController extends Controller
             $request->merge(['slug' => Str::slug($request->nombre)]);
         }
 
-        $categoria->update($request->only(['nombre', 'slug', 'descripcion', 'activo']));
+        $categoria->update($request->only(['nombre', 'slug', 'descripcion', 'icono', 'color', 'activo']));
 
         return response()->json($categoria);
     }

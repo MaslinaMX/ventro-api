@@ -10,6 +10,20 @@ use Illuminate\Http\Request;
 
 class ProductoVarianteController extends Controller
 {
+    public function show(int $productoId, int $id)
+    {
+        $variante = ProductoVariante::where('producto_id', $productoId)->findOrFail($id);
+
+        return response()->json(
+            $variante->load([
+                'stock',
+                'imagenes',
+                'precios.lista',
+                'atributos.atributo',
+            ])
+        );
+    }
+
     public function update(Request $request, int $productoId, int $id)
     {
         $variante = ProductoVariante::where('producto_id', $productoId)->findOrFail($id);
@@ -38,7 +52,7 @@ class ProductoVarianteController extends Controller
         ]);
 
         $variante->update($request->only([
-            'nombre', 'precio', 'sku', 'codigo_barras', 'cost_net',
+            'nombre', 'precio', 'sku', 'codigo_barras', 'cost_net', 'imagenes',
             'iva', 'ieps', 'impuestos_incluidos', 'is_default',
             'allow_online', 'allow_out_of_stock', 'sat_key', 'activo',
         ]));
@@ -158,6 +172,7 @@ class ProductoVarianteController extends Controller
             $variante->load([
                 'stock' => fn ($q) => $q->where('sucursal_id', $sucursalId),
                 'precios.lista',
+                'imagenes',
                 'atributos.atributo',
             ]),
             201

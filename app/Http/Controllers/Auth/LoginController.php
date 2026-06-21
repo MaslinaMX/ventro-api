@@ -54,6 +54,7 @@ class LoginController extends Controller
                 'role' => $user->role,
                 'is_deletable' => $user->is_deletable,
                 'employee_number' => $user->employee_number,
+                'pin_is_default' => ! $user->pin_changed,
             ],
         ]);
     }

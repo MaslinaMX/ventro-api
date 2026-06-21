@@ -2,11 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Producto extends Model
 {
-    protected $fillable = ['categoria_id', 'nombre', 'descripcion', 'activo'];
+    use HasFactory;
+
+    protected $fillable = [
+        'categoria_id',
+        'nombre',
+        'descripcion',
+        'tiene_variantes',
+        'activo',
+    ];
+
+    protected $casts = [
+        'activo' => 'boolean',
+        'tiene_variantes' => 'boolean',
+    ];
 
     public function categoria()
     {
@@ -18,11 +32,43 @@ class Producto extends Model
         return $this->hasMany(ProductoVariante::class);
     }
 
-    public function stockTotal($sucursalId)
+    public function stocks()
     {
-        return $this->variantes()
-            ->join('producto_variante_stock', 'producto_variantes.id', '=', 'producto_variante_stock.variante_id')
-            ->where('producto_variante_stock.sucursal_id', $sucursalId)
-            ->sum('producto_variante_stock.cantidad');
+        return $this->hasManyThrough(
+            ProductoVarianteStock::class,
+            ProductoVariante::class,
+            'producto_id',
+            'variante_id'
+        );
+    }
+
+    public function precios()
+    {
+        return $this->hasManyThrough(
+            ProductoVariantePrecio::class,
+            ProductoVariante::class,
+            'producto_id',
+            'variante_id'
+        );
+    }
+
+    public function imagenes()
+    {
+        return $this->hasManyThrough(
+            ProductoVarianteImagen::class,
+            ProductoVariante::class,
+            'producto_id',
+            'variante_id'
+        );
+    }
+
+    public function getStockTotalAttribute()
+    {
+        return $this->stocks()->sum('cantidad');
+    }
+
+    public function getTieneMultiplesVariantesAttribute()
+    {
+        return $this->variantes()->count() > 1;
     }
 }

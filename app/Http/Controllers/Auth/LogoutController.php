@@ -9,10 +9,11 @@ class LogoutController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()?->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
 
-        return response()->json([
-            'message' => 'Sesión cerrada.',
-        ]);
+        return response()->json(['message' => 'Sesión cerrada.']);
     }
 }

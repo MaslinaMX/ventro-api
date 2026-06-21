@@ -7,9 +7,11 @@ use App\Models\Caja;
 use App\Models\ListaPrecio;
 use App\Models\Sucursal;
 use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use App\Models\TenantUser;
 use App\Models\User;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -17,7 +19,7 @@ use Stancl\Tenancy\Database\Models\Domain;
 
 class RegisterController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
             'empresa' => ['required', 'string', 'max:255'],
@@ -35,14 +37,32 @@ class RegisterController extends Controller
             ], 422);
         }
 
+        // ─── Crear tenant central ─────────────────────────────────────────────
         $tenant = Tenant::create([
             'id' => Str::uuid(),
             'name' => $request->empresa,
+            'slug' => $request->slug,
             'email' => $request->email,
             'plan' => 'basic',
             'status' => 'active',
         ]);
 
+        // ─── Suscripción ──────────────────────────────────────────────────────
+        TenantSubscription::create([
+            'tenant_id' => $tenant->id,
+            'plan' => 'free_trial',
+            'status' => 'trial',
+            'base_price' => 349.90,
+            'currency' => 'MXN',
+            'period' => 'monthly',
+            'included_branches' => 1,
+            'extra_branch_cost' => 199.90,
+            'trial_ends_at' => now()->addDays(15),
+            'next_billing_at' => now()->addDays(15),
+            'spei_reference' => $request->slug,
+        ]);
+
+        // ─── Dominio ──────────────────────────────────────────────────────────
         try {
             $tenant->domains()->create(['domain' => $domain]);
         } catch (QueryException $e) {
@@ -61,12 +81,16 @@ class RegisterController extends Controller
             'tenant_id' => $tenant->id,
         ]);
 
+        // ─── Inicializar tenant ───────────────────────────────────────────────
         tenancy()->initialize($tenant);
 
         try {
             $data = DB::transaction(function () use ($request) {
                 $sucursal = Sucursal::create([
                     'nombre' => $request->empresa,
+                    'email' => $request->email,
+                    'is_main' => true,
+                    'is_deletable' => false,
                     'activa' => true,
                 ]);
 
@@ -77,7 +101,7 @@ class RegisterController extends Controller
                 ]);
 
                 $user = User::create([
-                    'name' => $request->empresa, // temporal, se actualiza en /me
+                    'name' => $request->empresa,
                     'email' => $request->email,
                     'password' => bcrypt($request->password),
                     'role' => 'admin',
@@ -99,6 +123,7 @@ class RegisterController extends Controller
             tenancy()->end();
             $tenant->domains()->delete();
             TenantUser::where('tenant_id', $tenant->id)->delete();
+            TenantSubscription::where('tenant_id', $tenant->id)->delete();
             $tenant->delete();
             throw $e;
         }

@@ -55,12 +55,16 @@ class ProductoController extends Controller
             'nombre' => ['required', 'string'],
             'categoria_id' => ['required', 'integer', 'exists:categorias,id'],
             'descripcion' => ['nullable', 'string'],
+            'tiene_variantes' => ['required', 'boolean'],
             'variantes' => ['required', 'array', 'min:1'],
             'variantes.*.nombre' => ['required', 'string'],
             'variantes.*.precio' => ['required', 'numeric', 'min:0'],
             'variantes.*.sku' => ['nullable', 'string'],
             'variantes.*.codigo_barras' => ['nullable', 'string'],
-            'variantes.*.stock' => ['required', 'integer', 'min:0'],
+            'variantes.*.stocks' => ['required', 'array', 'min:1'],
+            'variantes.*.stocks.*.sucursal_id' => ['required', 'integer', 'exists:sucursales,id'],
+            'variantes.*.stocks.*.cantidad' => ['required', 'integer', 'min:0'],
+            'variantes.*.stocks.*.cantidad_minima' => ['nullable', 'integer', 'min:0'],
             'variantes.*.iva' => ['nullable', 'numeric', 'in:0,8,16'],
             'variantes.*.ieps' => ['nullable', 'numeric', 'in:0,6,7,8,9,10,26.5,30,30.4,32,53,160'],
             'variantes.*.impuestos_incluidos' => ['nullable', 'boolean'],
@@ -80,10 +84,9 @@ class ProductoController extends Controller
             'nombre' => $request->nombre,
             'categoria_id' => $request->categoria_id,
             'descripcion' => $request->descripcion,
+            'tiene_variantes' => $request->tiene_variantes,
             'activo' => true,
         ]);
-
-        $sucursalId = $request->header('X-Sucursal-ID');
 
         foreach ($request->variantes as $v) {
             $variante = ProductoVariante::create([
@@ -103,15 +106,16 @@ class ProductoController extends Controller
                 'activo' => true,
             ]);
 
-            // Stock
-            ProductoVarianteStock::create([
-                'variante_id' => $variante->id,
-                'sucursal_id' => $sucursalId,
-                'cantidad' => $v['stock'],
-                'cantidad_minima' => $v['cantidad_minima'] ?? 0,
-            ]);
+            // Stock por sucursal — una fila por cada sucursal que mande el form
+            foreach ($v['stocks'] as $stockEntry) {
+                ProductoVarianteStock::create([
+                    'variante_id' => $variante->id,
+                    'sucursal_id' => $stockEntry['sucursal_id'],
+                    'cantidad' => $stockEntry['cantidad'],
+                    'cantidad_minima' => $stockEntry['cantidad_minima'] ?? 0,
+                ]);
+            }
 
-            // Precios por lista
             if (! empty($v['precios'])) {
                 foreach ($v['precios'] as $p) {
                     ProductoVariantePrecio::create([
@@ -122,7 +126,6 @@ class ProductoController extends Controller
                 }
             }
 
-            // Atributos
             if (! empty($v['atributos'])) {
                 $variante->atributos()->sync($v['atributos']);
             }
@@ -169,12 +172,13 @@ class ProductoController extends Controller
             'nombre' => ['sometimes', 'string'],
             'categoria_id' => ['sometimes', 'integer', 'exists:categorias,id'],
             'descripcion' => ['nullable', 'string'],
+            'tiene_variantes' => ['sometimes', 'boolean'],
             'activo' => ['sometimes', 'boolean'],
         ]);
 
-        $producto->update($request->only(['nombre', 'categoria_id', 'descripcion', 'activo']));
+        $producto->update($request->only(['nombre', 'categoria_id', 'descripcion', 'tiene_variantes', 'activo']));
 
-        return response()->json($producto->load('variantes'));
+        return response()->json($producto->load(['categoria', 'variantes']));
     }
 
     public function destroy(int $id)
