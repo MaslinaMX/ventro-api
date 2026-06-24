@@ -178,4 +178,50 @@ class ProductoVarianteController extends Controller
             201
         );
     }
+
+    /**
+     * GET /productos/variantes/inactivas
+     *
+     * Lista todas las variantes inactivas (de cualquier producto), para la
+     * pantalla de "Ver inactivos" donde se pueden consultar y reactivar.
+     */
+    public function inactivas(Request $request)
+    {
+        $search = $request->query('search');
+
+        $query = ProductoVariante::with('producto:id,nombre')
+            ->where('activo', false);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('codigo_barras', 'like', "%{$search}%")
+                    ->orWhereHas('producto', function ($q) use ($search) {
+                        $q->where('nombre', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $variantes = $query
+            ->orderByDesc('updated_at')
+            ->paginate($request->integer('per_page', 20));
+
+        return response()->json($variantes);
+    }
+
+    /**
+     * PATCH /productos/{productoId}/variantes/{id}/reactivar
+     *
+     * Reactiva una variante previamente desactivada (activo = true).
+     */
+    public function reactivar(int $productoId, int $id)
+    {
+        $variante = ProductoVariante::where('producto_id', $productoId)->findOrFail($id);
+        $variante->update(['activo' => true]);
+
+        return response()->json(
+            $variante->load(['stock', 'imagenes', 'precios.lista', 'atributos.atributo'])
+        );
+    }
 }

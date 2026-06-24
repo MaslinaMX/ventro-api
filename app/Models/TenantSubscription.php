@@ -40,7 +40,7 @@ class TenantSubscription extends Model
             return 0;
         }
 
-        return max(0, (int) now()->diffInDays($this->trial_ends_at, false));
+        return max(0, now()->startOfDay()->diffInDays($this->trial_ends_at->startOfDay(), false));
     }
 
     public function isTrialExpired(): bool

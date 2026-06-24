@@ -19,20 +19,25 @@ class ProductoController extends Controller
         $productos = Producto::with([
             'categoria',
             'variantes' => function ($q) use ($sucursalId, $listaId) {
-                $q->with([
-                    'stock' => fn ($q) => $q->where('sucursal_id', $sucursalId),
-                    'imagenes' => fn ($q) => $q->where('is_primary', true),
-                    'precios' => fn ($q) => $listaId ? $q->where('lista_id', $listaId) : $q,
-                ]);
+                $q->where('activo', true)
+                    ->with([
+                        'stock' => fn ($q) => $q->where('sucursal_id', $sucursalId),
+                        'imagenes' => fn ($q) => $q->where('is_primary', true),
+                        'precios' => fn ($q) => $listaId ? $q->where('lista_id', $listaId) : $q,
+                    ]);
             },
         ])
             ->where('activo', true)
             ->when($request->search, function ($q) use ($request) {
-                $q->where('nombre', 'like', "%{$request->search}%")
-                    ->orWhereHas('variantes', function ($q) use ($request) {
+                $q->where('activo', true)
+                    ->where(function ($q) use ($request) {
                         $q->where('sku', 'like', "%{$request->search}%")
-                            ->orWhere('codigo_barras', 'like', "%{$request->search}%")
-                            ->orWhere('nombre', 'like', "%{$request->search}%");
+                            ->orWhereHas('variantes', function ($q) use ($request) {
+                                $q->where('sku', 'like', "%{$request->search}%")
+                                    ->orWhere('codigo_barras', 'like', "%{$request->search}%")
+                                    ->orWhere('nombre', 'like', "%{$request->search}%");
+                            });
+
                     });
             })
             ->when($request->categoria_id, fn ($q) => $q->where('categoria_id', $request->categoria_id))
@@ -146,12 +151,13 @@ class ProductoController extends Controller
         $producto->load([
             'categoria',
             'variantes' => function ($q) use ($sucursalId) {
-                $q->with([
-                    'stock' => fn ($q) => $q->where('sucursal_id', $sucursalId),
-                    'precios.lista',
-                    'imagenes',
-                    'atributos.atributo',
-                ]);
+                $q->where('activo', true)
+                    ->with([
+                        'stock' => fn ($q) => $q->where('sucursal_id', $sucursalId),
+                        'precios.lista',
+                        'imagenes',
+                        'atributos.atributo',
+                    ]);
             },
         ]);
 

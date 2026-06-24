@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MovimientoInventario;
 use App\Models\ProductoVariante;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 
@@ -189,5 +190,44 @@ class InventarioController extends Controller
             'salida' => $salida,
             'entrada' => $entrada,
         ], 201);
+    }
+
+    /**
+     * GET /api/inventario/configuracion/stock-minimo
+     *
+     * Regresa el valor de cantidad_minima de cualquier fila existente,
+     * como aproximación del "umbral global" configurado. Si no hay filas,
+     * regresa un default razonable.
+     */
+    public function obtenerStockMinimoGlobal()
+    {
+        $cantidadMinima = DB::table('producto_variante_stock')
+            ->orderBy('id')
+            ->value('cantidad_minima');
+
+        return response()->json([
+            'cantidad_minima' => $cantidadMinima ?? 5,
+        ]);
+    }
+
+    /**
+     * POST /api/inventario/configuracion/stock-minimo
+     *
+     * Actualiza cantidad_minima en TODAS las filas de producto_variante_stock
+     * al valor dado. Simula un umbral "global" mientras no se soporte
+     * personalización por producto.
+     */
+    public function actualizarStockMinimoGlobal(Request $request)
+    {
+        $validated = $request->validate([
+            'cantidad_minima' => ['required', 'integer', 'min:0'],
+        ]);
+
+        DB::table('producto_variante_stock')
+            ->update(['cantidad_minima' => $validated['cantidad_minima']]);
+
+        return response()->json([
+            'cantidad_minima' => $validated['cantidad_minima'],
+        ]);
     }
 }

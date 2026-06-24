@@ -14,7 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'first_name', 'last_name', 'email', 'password',
         'phone', 'employee_number', 'security_pin', 'pin_updated_at',
-        'role', 'permissions', 'is_seller', 'is_deletable', 'activo', 'sucursal_id',
+        'role', 'is_seller', 'is_deletable', 'activo', 'sucursal_id',
         'invite_token', 'invited_at', 'activated_at', 'pin_changed',
     ];
 
@@ -28,10 +28,22 @@ class User extends Authenticatable
         'is_seller' => 'boolean',
         'is_deletable' => 'boolean',
         'activo' => 'boolean',
-        'permissions' => 'array',
         'invited_at' => 'datetime',
         'activated_at' => 'datetime',
         'pin_changed' => 'boolean',
+    ];
+
+    // ─── Roles válidos ──────────────────────────────────────────────────────
+    public const ROLE_ADMIN_EMPRESA = 'admin_empresa';
+
+    public const ROLE_ADMIN_SUCURSAL = 'admin_sucursal';
+
+    public const ROLE_VENDEDOR = 'vendedor';
+
+    public const ROLES = [
+        self::ROLE_ADMIN_EMPRESA,
+        self::ROLE_ADMIN_SUCURSAL,
+        self::ROLE_VENDEDOR,
     ];
 
     // ─── Relaciones ───────────────────────────────────────────────────────────
@@ -45,14 +57,30 @@ class User extends Authenticatable
         return $this->belongsTo(Sucursal::class);
     }
 
-    // ─── Permisos ─────────────────────────────────────────────────────────────
+    // ─── Alcance / Permisos ─────────────────────────────────────────────────
+    /**
+     * admin_empresa: todas las sucursales del tenant.
+     * admin_sucursal: gestión de productos, inventario, usuarios de su sucursal.
+     * vendedor: ventas, cobros, consulta de productos (su caja).
+     */
     public function hasPermission(string $permission): bool
     {
-        if ($this->role === 'admin') {
+        if ($this->role === self::ROLE_ADMIN_EMPRESA) {
             return true;
         }
 
-        if ($this->role === 'vendedor') {
+        if ($this->role === self::ROLE_ADMIN_SUCURSAL) {
+            return in_array($permission, [
+                'productos.crear', 'productos.editar', 'productos.ver', 'productos.eliminar',
+                'inventario.crear', 'inventario.editar', 'inventario.ver', 'inventario.ajustar',
+                'usuarios.crear', 'usuarios.editar', 'usuarios.ver',
+                'ventas.crear', 'ventas.ver',
+                'clientes.crear', 'clientes.ver',
+                'caja.abrir', 'caja.cerrar',
+            ]);
+        }
+
+        if ($this->role === self::ROLE_VENDEDOR) {
             return in_array($permission, [
                 'ventas.crear', 'ventas.ver',
                 'clientes.crear', 'clientes.ver',
@@ -61,10 +89,16 @@ class User extends Authenticatable
             ]);
         }
 
-        // Personalizado
-        [$modulo, $accion] = explode('.', $permission);
+        return false;
+    }
 
-        return in_array($accion, $this->permissions[$modulo] ?? []);
+    /**
+     * true si el usuario solo debe ver/operar dentro de su propia sucursal
+     * (admin_sucursal y vendedor). admin_empresa no tiene restricción.
+     */
+    public function isScopedToSucursal(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN_SUCURSAL, self::ROLE_VENDEDOR]);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

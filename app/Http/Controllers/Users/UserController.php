@@ -32,7 +32,6 @@ class UserController extends Controller
     // ─── POST /usuarios ───────────────────────────────────────────────────────
     public function store(Request $request): JsonResponse
     {
-
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -40,8 +39,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'employee_number' => ['nullable', 'string', Rule::unique('users')],
             'sucursal_id' => ['nullable', 'integer', 'exists:sucursales,id'],
-            'role' => ['required', Rule::in(['admin', 'vendedor', 'personalizado'])],
-            'permissions' => ['nullable', 'array'],
+            'role' => ['required', Rule::in(User::ROLES)],
             'is_seller' => ['boolean'],
             // ← sin password ni security_pin
         ]);
@@ -62,7 +60,6 @@ class UserController extends Controller
             'employee_number' => $employeeNumber,
             'sucursal_id' => $request->sucursal_id,
             'role' => $request->role,
-            'permissions' => $request->role === 'personalizado' ? $request->permissions : null,
             'is_seller' => $request->boolean('is_seller'),
             'is_deletable' => true,
             'activo' => false, // inactivo hasta activar
@@ -73,8 +70,8 @@ class UserController extends Controller
         ]);
 
         $activationUrl = config('app.frontend_url')
-    .'/#/activar?token='.$inviteToken
-    .'&tenant='.tenant('id');
+            .'/#/activar?token='.$inviteToken
+            .'&tenant='.tenant('id');
 
         Mail::to($user->email)->send(new UserInvitedMail($user, $activationUrl));
 
@@ -101,8 +98,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'employee_number' => ['nullable', 'string', Rule::unique('users')->ignore($user->id)],
             'sucursal_id' => ['nullable', 'integer', 'exists:sucursales,id'],
-            'role' => ['sometimes', Rule::in(['admin', 'vendedor', 'personalizado'])],
-            'permissions' => ['nullable', 'array'],
+            'role' => ['sometimes', Rule::in(User::ROLES)],
             'is_seller' => ['boolean'],
             'security_pin' => ['sometimes', 'digits:4'],
             'password' => ['sometimes', 'string', 'min:8'],
@@ -126,12 +122,6 @@ class UserController extends Controller
             $data['security_pin'] = $request->security_pin;
             $data['pin_updated_at'] = now();
             $data['pin_changed'] = true;
-        }
-
-        if ($request->has('role')) {
-            $data['permissions'] = $request->role === 'personalizado'
-                ? $request->permissions
-                : null;
         }
 
         $user->update($data);
@@ -179,12 +169,6 @@ class UserController extends Controller
             'phone' => $user->phone,
             'employee_number' => $user->employee_number,
             'role' => $user->role,
-            'permissions' => match ($user->role) {
-                'admin' => null,
-                'vendedor' => ['principal', 'caja', 'cotizaciones', 'productos', 'ventas', 'pedidos', 'clientes'],
-                'personalizado' => $user->permissions ?? [],
-                default => [],
-            },
             'is_seller' => $user->is_seller,
             'is_deletable' => $user->is_deletable,
             'activo' => $user->activo,
@@ -249,12 +233,10 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        // Generar token manual
         $token = Str::random(64);
 
         Log::info('DB al guardar token: '.DB::connection()->getDatabaseName());
 
-        // Guardar en password_reset_tokens del tenant
         DB::connection('tenant')->table('password_reset_tokens')->updateOrInsert(
             ['email' => $user->email],
             [
@@ -263,13 +245,11 @@ class UserController extends Controller
             ]
         );
 
-        // Construir URL para el frontend
         $url = config('app.frontend_url')
             .'/#/reset-password?token='.$token
             .'&email='.urlencode($user->email)
             .'&tenant='.tenant('id');
 
-        // Enviar correo
         Mail::to($user->email)
             ->send(new ResetPasswordMail($user, $url));
 

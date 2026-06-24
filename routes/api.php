@@ -83,6 +83,9 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     Route::get('/auth/me', [MeController::class, 'show']);
     Route::patch('/auth/me', [MeController::class, 'update']);
     Route::post('/auth/logout', LogoutController::class);
+
+    Route::get('/productos/variantes/inactivas', [ProductoVarianteController::class, 'inactivas']);
+
     Route::apiResource('productos', ProductoController::class);
     Route::apiResource('categorias', CategoriaController::class);
 
@@ -110,6 +113,7 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
         Route::post('/', [ProductoVarianteController::class, 'store']);
         Route::put('/{id}', [ProductoVarianteController::class, 'update']);
         Route::delete('/{id}', [ProductoVarianteController::class, 'destroy']);
+        Route::patch('/{id}/reactivar', [ProductoVarianteController::class, 'reactivar']);
     });
 
     Route::prefix('productos/{productoId}/variantes/{varianteId}/imagenes')->group(function () {
@@ -124,6 +128,8 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
         Route::get('variantes/{variante}/movimientos', [InventarioController::class, 'movimientosPorVariante']);
         Route::post('movimientos', [InventarioController::class, 'registrarMovimiento']);
         Route::post('transferencias', [InventarioController::class, 'transferir']);
+        Route::get('configuracion/stock-minimo', [InventarioController::class, 'obtenerStockMinimoGlobal']);
+        Route::post('configuracion/stock-minimo', [InventarioController::class, 'actualizarStockMinimoGlobal']);
     });
 
 });
