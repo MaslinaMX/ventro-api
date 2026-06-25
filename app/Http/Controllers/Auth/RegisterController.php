@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Caja;
 use App\Models\ListaPrecio;
+use App\Models\MetodoPago;
 use App\Models\Sucursal;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
@@ -95,10 +96,21 @@ class RegisterController extends Controller
                 ]);
 
                 Caja::create([
-                    'nombre' => 'Caja 1',
+                    'nombre' => 'Caja Principal',
                     'sucursal_id' => $sucursal->id,
                     'activa' => true,
+                    'is_deletable' => false,
                 ]);
+
+                $metodosPago = [
+                    ['nombre' => 'Efectivo', 'icono' => 'efectivo', 'color' => '#22C55E', 'is_deletable' => false, 'requiere_referencia' => false],
+                    ['nombre' => 'Tarjeta de Crédito', 'icono' => 'tarjeta', 'color' => '#3B82F6', 'is_deletable' => true, 'requiere_referencia' => true],
+                    ['nombre' => 'Tarjeta de Débito', 'icono' => 'tarjeta', 'color' => '#6366F1', 'is_deletable' => true, 'requiere_referencia' => true],
+                    ['nombre' => 'Transferencia', 'icono' => 'transferencia', 'color' => '#A855F7', 'is_deletable' => true, 'requiere_referencia' => true],
+                ];
+                foreach ($metodosPago as $metodo) {
+                    MetodoPago::create([...$metodo, 'activo' => true]);
+                }
 
                 $user = User::create([
                     'name' => $request->empresa,

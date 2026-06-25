@@ -12,10 +12,21 @@ class Caja extends Model
         'nombre',
         'sucursal_id',
         'activa',
+        'is_deletable',
+    ];
+
+    protected $casts = [
+        'activa' => 'boolean',
+        'is_deletable' => 'boolean',
     ];
 
     public function sucursal()
     {
         return $this->belongsTo(Sucursal::class);
+    }
+
+    public function sesionActiva()
+    {
+        return $this->hasOne(SesionCaja::class)->where('estado', 'abierta');
     }
 }

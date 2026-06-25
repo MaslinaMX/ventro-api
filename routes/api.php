@@ -8,16 +8,20 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\LookupController;
 use App\Http\Controllers\Auth\MeController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CajaController;
 use App\Http\Controllers\Inventario\InventarioController;
+use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\Productos\AtributoController;
 use App\Http\Controllers\Productos\CategoriaController;
 use App\Http\Controllers\Productos\ListaPrecioController;
 use App\Http\Controllers\Productos\ProductoController;
 use App\Http\Controllers\Productos\ProductoImagenController;
 use App\Http\Controllers\Productos\ProductoVarianteController;
+use App\Http\Controllers\SesionCajaController;
 use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\Users\UserController;
+use App\Http\Controllers\VentaController;
 use App\Http\Middleware\AuthenticateTenant;
 use App\Http\Middleware\CheckTenantAccess;
 use App\Http\Middleware\InitializeTenancyByHeader;
@@ -37,8 +41,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', RegisterController::class);
 });
 
-Route::middleware([InitializeTenancyByHeader::class])->get('/debug-ten
-nt', function () {
+Route::middleware([InitializeTenancyByHeader::class])->get('/debug-tenant', function () {
     return response()->json([
         'tenant' => tenancy()->initialized ? tenant('id') : 'no tenant',
         'db' => DB::connection()->getDatabaseName(),
@@ -93,7 +96,19 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     Route::patch('tenant', [TenantController::class, 'update']);
     Route::post('tenant/logo', [TenantController::class, 'uploadLogo']);
 
+    Route::apiResource('cajas', CajaController::class);
+    Route::get('cajas-abiertas', [CajaController::class, 'abiertas']);
+    Route::post('ventas', [VentaController::class, 'store']);
+    Route::post('ventas/verificar-empleado', [VentaController::class, 'verificarEmpleado']);
+
+    Route::apiResource('metodos-pago', MetodoPagoController::class);
     Route::apiResource('sucursales', SucursalController::class);
+
+    Route::get('cajas/{cajaId}/sesion-activa', [SesionCajaController::class, 'activa']);
+    Route::post('cajas/{cajaId}/abrir', [SesionCajaController::class, 'abrir']);
+    Route::post('sesiones-caja/{id}/cerrar', [SesionCajaController::class, 'cerrar']);
+    Route::post('sesiones-caja/{id}/corte-x', [SesionCajaController::class, 'corteX']);
+
     Route::get('/account', [AccountController::class, 'show']);
 
     Route::apiResource('listas-precios', ListaPrecioController::class);

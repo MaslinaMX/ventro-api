@@ -77,6 +77,7 @@ class User extends Authenticatable
                 'ventas.crear', 'ventas.ver',
                 'clientes.crear', 'clientes.ver',
                 'caja.abrir', 'caja.cerrar',
+                'metodos_pago.crear', 'metodos_pago.editar', 'metodos_pago.eliminar', 'metodos_pago.ver',
             ]);
         }
 
@@ -86,6 +87,7 @@ class User extends Authenticatable
                 'clientes.crear', 'clientes.ver',
                 'productos.ver',
                 'caja.abrir', 'caja.cerrar',
+                'metodos_pago.ver',
             ]);
         }
 
