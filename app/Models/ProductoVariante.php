@@ -61,7 +61,18 @@ class ProductoVariante extends Model
 
     public function calcularPrecio(): array
     {
-        $base = (float) $this->precio;
+
+        return $this->calcularDesgloseFiscal((float) $this->precio);
+    }
+
+    /**
+     * Mismo desglose fiscal que calcularPrecio(), pero sobre un monto
+     * específico en vez del precio de catálogo — útil cuando se vendió
+     * con descuento y el IVA debe calcularse sobre lo realmente cobrado.
+     */
+    public function calcularDesgloseFiscal(float $base): array
+    {
+
         $iva = (float) $this->iva / 100;
         $ieps = (float) $this->ieps / 100;
 

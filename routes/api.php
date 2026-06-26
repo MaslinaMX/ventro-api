@@ -8,7 +8,11 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\LookupController;
 use App\Http\Controllers\Auth\MeController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\CajaController;
+use App\Http\Controllers\Caja\CajaController;
+use App\Http\Controllers\Caja\SesionCajaController;
+use App\Http\Controllers\ConfiguracionTicketController;
+use App\Http\Controllers\Gastos\CategoriaGastoController;
+use App\Http\Controllers\Gastos\GastoController;
 use App\Http\Controllers\Inventario\InventarioController;
 use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\Productos\AtributoController;
@@ -17,11 +21,10 @@ use App\Http\Controllers\Productos\ListaPrecioController;
 use App\Http\Controllers\Productos\ProductoController;
 use App\Http\Controllers\Productos\ProductoImagenController;
 use App\Http\Controllers\Productos\ProductoVarianteController;
-use App\Http\Controllers\SesionCajaController;
 use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\Users\UserController;
-use App\Http\Controllers\VentaController;
+use App\Http\Controllers\Ventas\VentaController;
 use App\Http\Middleware\AuthenticateTenant;
 use App\Http\Middleware\CheckTenantAccess;
 use App\Http\Middleware\InitializeTenancyByHeader;
@@ -98,6 +101,9 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
 
     Route::apiResource('cajas', CajaController::class);
     Route::get('cajas-abiertas', [CajaController::class, 'abiertas']);
+    Route::get('configuracion-tickets', [ConfiguracionTicketController::class, 'show']);
+    Route::patch('configuracion-tickets', [ConfiguracionTicketController::class, 'update']);
+
     Route::post('ventas', [VentaController::class, 'store']);
     Route::post('ventas/verificar-empleado', [VentaController::class, 'verificarEmpleado']);
 
@@ -146,5 +152,8 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
         Route::get('configuracion/stock-minimo', [InventarioController::class, 'obtenerStockMinimoGlobal']);
         Route::post('configuracion/stock-minimo', [InventarioController::class, 'actualizarStockMinimoGlobal']);
     });
+
+    Route::apiResource('gastos', GastoController::class);
+    Route::apiResource('categorias-gasto', CategoriaGastoController::class);
 
 });

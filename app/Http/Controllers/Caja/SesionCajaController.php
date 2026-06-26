@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Caja;
 
 use App\Http\Controllers\Concerns\VerificaEmpleadoPorPin;
+use App\Http\Controllers\Controller;
 use App\Models\Caja;
 use App\Models\SesionCaja;
 use App\Models\User;

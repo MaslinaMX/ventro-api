@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Ventas;
 
 use App\Http\Controllers\Concerns\VerificaEmpleadoPorPin;
+use App\Http\Controllers\Controller;
 use App\Models\Caja;
 use App\Models\MetodoPago;
 use App\Models\MovimientoInventario;
@@ -86,10 +87,12 @@ class VentaController extends Controller
 
         try {
             $venta = DB::transaction(function () use ($data, $sesion, $empleado, $subtotalVenta, $descuentoVenta, $totalVenta) {
+                $siguienteNumero = (Venta::max('numero_ticket') ?? 0) + 1;
                 $venta = Venta::create([
                     'sesion_caja_id' => $sesion->id,
                     'usuario_id' => $empleado->id,
                     'cliente_id' => $data['cliente_id'] ?? null,
+                    'numero_ticket' => $siguienteNumero,
                     'subtotal' => $subtotalVenta,
                     'descuento' => $descuentoVenta,
                     'total' => $totalVenta,
@@ -99,18 +102,29 @@ class VentaController extends Controller
                 foreach ($data['items'] as $item) {
                     $variante = ProductoVariante::with('producto')->findOrFail($item['producto_variante_id']);
                     $descuentoLinea = $item['descuento_linea'] ?? 0;
-                    $subtotalLinea = ($item['precio_unitario'] * $item['cantidad']) - $descuentoLinea;
+                    $cantidad = $item['cantidad'];
+
+                    // Precio efectivo por unidad, ya con descuento de línea aplicado.
+                    $precioEfectivoUnitario = $item['precio_unitario'] - ($descuentoLinea / $cantidad);
+
+                    // Desglose fiscal sobre lo REALMENTE cobrado, no sobre el
+                    // precio de catálogo — así el IVA es correcto aunque haya descuento.
+                    $desglose = $variante->calcularDesgloseFiscal($precioEfectivoUnitario);
+                    $ivaMontoLinea = round($desglose['iva_monto'] * $cantidad, 2);
+                    $iepsMontoLinea = round($desglose['ieps_monto'] * $cantidad, 2);
+
+                    $subtotalLinea = ($item['precio_unitario'] * $cantidad) - $descuentoLinea;
 
                     VentaItem::create([
                         'venta_id' => $venta->id,
                         'producto_variante_id' => $variante->id,
                         'nombre_snapshot' => "{$variante->producto->nombre} - {$variante->nombre}",
-                        'cantidad' => $item['cantidad'],
+                        'cantidad' => $cantidad,
                         'precio_unitario' => $item['precio_unitario'],
                         'precio_lista' => $item['precio_lista'],
                         'descuento_linea' => $descuentoLinea,
-                        'iva_monto' => 0, // TODO: desglose real de impuestos
-                        'ieps_monto' => 0,
+                        'iva_monto' => $ivaMontoLinea,
+                        'ieps_monto' => $iepsMontoLinea,
                         'costo_unitario' => $variante->cost_net,
                         'subtotal' => $subtotalLinea,
                     ]);
@@ -121,7 +135,7 @@ class VentaController extends Controller
                         'sucursal_id' => $sesion->caja->sucursal_id,
                         'type' => 'out',
                         'reason' => 'venta',
-                        'cantidad' => $item['cantidad'],
+                        'cantidad' => $cantidad,
                         'user_id' => $empleado->id,
                         'reference_id' => $venta->id,
                         'reference_type' => Venta::class,

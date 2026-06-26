@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Caja;
 
+use App\Http\Controllers\Controller;
 use App\Models\Caja;
 use Illuminate\Http\Request;
 

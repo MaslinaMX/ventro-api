@@ -14,6 +14,7 @@ class Venta extends Model
         'cliente_id',
         'subtotal',
         'descuento',
+        'numero_ticket',
         'total',
         'estado',
         'cancelada_en',

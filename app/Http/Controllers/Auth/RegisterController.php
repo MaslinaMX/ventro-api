@@ -20,6 +20,15 @@ use Stancl\Tenancy\Database\Models\Domain;
 
 class RegisterController extends Controller
 {
+    private function generarCodigoTicketUnico(): int
+    {
+        do {
+            $codigo = random_int(100000, 999999);
+        } while (Tenant::where('codigo_ticket', $codigo)->exists());
+
+        return $codigo;
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
@@ -46,6 +55,7 @@ class RegisterController extends Controller
             'email' => $request->email,
             'plan' => 'basic',
             'status' => 'active',
+            'codigo_ticket' => $this->generarCodigoTicketUnico(),
         ]);
 
         // ─── Suscripción ──────────────────────────────────────────────────────
