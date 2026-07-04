@@ -230,4 +230,42 @@ class InventarioController extends Controller
             'cantidad_minima' => $validated['cantidad_minima'],
         ]);
     }
+
+    /**
+     * GET /api/inventario/movimientos
+     *
+     * Historial general de movimientos de inventario del tenant actual.
+     * Permite filtrar opcionalmente por producto (variante_id) y/o por
+     * sucursal (sucursal_id). Si no se manda ningún filtro, regresa todos
+     * los movimientos del tenant, paginados y ordenados del más reciente
+     * al más antiguo.
+     */
+    public function movimientos(Request $request)
+    {
+        $query = MovimientoInventario::query()
+            ->with([
+                'variante:id,nombre,sku,producto_id',
+                'variante.producto:id,nombre',
+                'user:id,name',
+                'sucursal:id,nombre',
+            ]);
+
+        if ($varianteId = $request->query('variante_id')) {
+            $query->where('variante_id', $varianteId);
+        }
+
+        if ($sucursalId = $request->query('sucursal_id')) {
+            $query->where('sucursal_id', $sucursalId);
+        }
+
+        if ($reason = $request->query('reason')) {
+            $query->where('reason', $reason);
+        }
+
+        $movimientos = $query
+            ->orderByDesc('created_at')
+            ->paginate($request->integer('per_page', 25));
+
+        return response()->json($movimientos);
+    }
 }

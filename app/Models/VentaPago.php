@@ -12,11 +12,13 @@ class VentaPago extends Model
         'venta_id',
         'metodo_pago_id',
         'monto',
+        'recibido',
         'referencia',
     ];
 
     protected $casts = [
         'monto' => 'decimal:2',
+        'recibido' => 'decimal:2',
     ];
 
     public function venta()

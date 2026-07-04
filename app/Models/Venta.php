@@ -18,6 +18,10 @@ class Venta extends Model
         'total',
         'estado',
         'cancelada_en',
+        'cancelada_por_id',
+        'base_gravable',
+        'iva_total',
+        'ieps_total',
     ];
 
     protected $casts = [
@@ -50,5 +54,10 @@ class Venta extends Model
     public function pagos()
     {
         return $this->hasMany(VentaPago::class);
+    }
+
+    public function devolucion()
+    {
+        return $this->hasOne(Devolucion::class);
     }
 }
