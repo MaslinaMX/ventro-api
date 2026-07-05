@@ -126,7 +126,7 @@ class RegisterController extends Controller
                     'name' => $request->empresa,
                     'email' => $request->email,
                     'password' => bcrypt($request->password),
-                    'role' => 'admin',
+                    'role' => 'admin_empresa',
                     'sucursal_id' => $sucursal->id,
                     'is_deletable' => false,
                     'is_seller' => false,
