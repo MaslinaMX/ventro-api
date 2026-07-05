@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export COMPOSER_ALLOW_SUPERUSER=1
 echo "🚀 Iniciando deploy..."
 cd /var/www/ventro/api
 
