@@ -60,7 +60,7 @@ class MeController extends Controller
         $tenantId = tenancy()->tenant->id;
         $fullName = $request->first_name.' '.$request->last_name;
 
-        tenancy()->runAsGlobal(function () use ($tenantId, $fullName) {
+        tenancy()->central(function () use ($tenantId, $fullName) {
             Tenant::find($tenantId)?->update(['owner_name' => $fullName]);
         });
 
