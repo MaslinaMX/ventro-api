@@ -60,4 +60,9 @@ class Venta extends Model
     {
         return $this->hasOne(Devolucion::class);
     }
+
+    public function canceladaPor()
+    {
+        return $this->belongsTo(User::class, 'cancelada_por_id');
+    }
 }

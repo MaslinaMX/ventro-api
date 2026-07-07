@@ -131,6 +131,7 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     Route::get('ventas/{id}/ticket', [TicketController::class, 'generar']);
     Route::post('ventas/{id}/ticket/email', [TicketController::class, 'enviarPorEmail']);
     Route::post('ventas/{id}/cancelar', [VentaController::class, 'cancelar']);
+    Route::get('ventas/{id}/ticket-cancelacion', [TicketController::class, 'cancelacion']);
 
     // Métodos de pago y sucursales. Controllers: MetodoPagoController, SucursalController.
     Route::apiResource('metodos-pago', MetodoPagoController::class);

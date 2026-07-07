@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\TicketVentaMail;
 use App\Models\ConfiguracionTicket;
+use App\Models\Devolucion;
 use App\Models\Venta;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -144,5 +145,94 @@ class TicketController extends Controller
         );
 
         return response()->json(['message' => 'Ticket enviado correctamente.']);
+    }
+
+    /**
+     * GET /ventas/{id}/ticket-cancelacion
+     * PDF de comprobante de cancelación: monto devuelto, método, motivo,
+     * quién canceló y qué items se regresaron a inventario.
+     */
+    public function cancelacion(int $ventaId)
+    {
+        $venta = Venta::with([
+            'items', 'usuario', 'sesionCaja.caja.sucursal', 'canceladaPor',
+        ])->findOrFail($ventaId);
+
+        if ($venta->estado !== 'cancelada') {
+            abort(422, 'Esta venta no ha sido cancelada.');
+        }
+
+        $devolucion = Devolucion::with('metodoDevolucion')
+            ->where('venta_id', $venta->id)
+            ->latest('devuelta_en')
+            ->firstOrFail();
+
+        $tenant = tenant();
+        $config = ConfiguracionTicket::obtener();
+        $sucursal = $venta->sesionCaja->caja->sucursal;
+        $numeroTicketCompleto = $this->numeroTicketCompleto($venta);
+
+        $logoBase64 = null;
+        if ($config->mostrar_logo && $tenant->logo) {
+            try {
+                $response = Http::timeout(5)->get($tenant->logo);
+                if ($response->successful()) {
+                    $mime = $response->header('Content-Type') ?? 'image/png';
+                    $logoBase64 = "data:{$mime};base64,".base64_encode($response->body());
+                }
+            } catch (\Throwable $e) {
+                $logoBase64 = null;
+            }
+        }
+
+        // Cruza los items_devueltos (JSON guardado en la devolución) con los
+        // items originales de la venta, para mostrar nombre + cantidad.
+        $itemsDevueltosIds = collect($devolucion->items_devueltos)
+            ->keyBy('venta_item_id');
+
+        $itemsDevueltos = $venta->items
+            ->filter(fn ($item) => $itemsDevueltosIds->has($item->id))
+            ->map(function ($item) use ($itemsDevueltosIds) {
+                $meta = $itemsDevueltosIds->get($item->id);
+
+                return [
+                    'cantidad' => $item->cantidad,
+                    'nombre_snapshot' => $item->nombre_snapshot,
+                    'subtotal' => $item->subtotal,
+                    'devuelto_a_inventario' => (bool) $meta['devuelto_a_inventario'],
+                ];
+            })->values()->toArray();
+
+        $barcodeBase64 = base64_encode(
+            (new BarcodeGeneratorPNG)->getBarcode($numeroTicketCompleto, BarcodeGeneratorPNG::TYPE_CODE_128)
+        );
+
+        $pdf = Pdf::loadView('tickets.cancelacion', [
+            'nombreNegocio' => $tenant->razon_social ?: $tenant->name,
+            'direccion' => $sucursal->direccion,
+            'ciudadEstadoCp' => trim(implode(', ', array_filter([
+                $sucursal->ciudad,
+                $sucursal->estado,
+                $sucursal->codigo_postal,
+            ]))),
+            'rfc' => $sucursal->rfc,
+            'telefono' => $sucursal->telefono,
+            'mostrarLogo' => $config->mostrar_logo,
+            'logoBase64' => $logoBase64,
+            'numeroTicketCompleto' => $numeroTicketCompleto,
+            'fechaVentaOriginal' => $venta->created_at->format('d/m/Y H:i:s'),
+            'fechaCancelacion' => $venta->cancelada_en->format('d/m/Y H:i:s'),
+            'canceladoPor' => $venta->canceladaPor->name,
+            'motivo' => $devolucion->motivo,
+            'montoDevuelto' => (float) $devolucion->monto_devuelto,
+            'metodoDevolucion' => $devolucion->metodoDevolucion->nombre,
+            'montoOriginal' => (float) $venta->total,
+            'itemsDevueltos' => $itemsDevueltos,
+            'barcodeBase64' => $barcodeBase64,
+            'cajeroNombre' => $venta->usuario->name,
+            'cajaNombre' => $venta->sesionCaja->caja->nombre,
+        ])->setPaper([0, 0, 250, 500], 'portrait');
+
+        return $pdf->stream("cancelacion-{$numeroTicketCompleto}.pdf");
     }
 }
