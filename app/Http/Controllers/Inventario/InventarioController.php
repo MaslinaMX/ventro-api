@@ -102,6 +102,20 @@ class InventarioController extends Controller
             $query->where('reason', $reason);
         }
 
+        if ($search = $request->query('search')) {
+            $query->whereHas('variante', function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhereHas('producto', function ($q) use ($search) {
+                        $q->where('nombre', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($mes = $request->query('mes')) {
+            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$mes]);
+        }
+
         $movimientos = $query
             ->orderByDesc('created_at')
             ->paginate($request->integer('per_page', 25));
@@ -260,6 +274,21 @@ class InventarioController extends Controller
 
         if ($reason = $request->query('reason')) {
             $query->where('reason', $reason);
+        }
+
+        if ($search = $request->query('search')) {
+            $query->whereHas('variante', function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhereHas('producto', function ($q) use ($search) {
+                        $q->where('nombre', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($mes = $request->query('mes')) {
+            // formato esperado: 'YYYY-MM'
+            $query->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$mes]);
         }
 
         $movimientos = $query
