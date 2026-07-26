@@ -23,6 +23,7 @@ use App\Http\Controllers\Productos\ListaPrecioController;
 use App\Http\Controllers\Productos\ProductoController;
 use App\Http\Controllers\Productos\ProductoImagenController;
 use App\Http\Controllers\Productos\ProductoVarianteController;
+use App\Http\Controllers\Publico\CatalogoPublicoController;
 use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\TicketController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Ventas\VentaController;
 use App\Http\Middleware\AuthenticateTenant;
 use App\Http\Middleware\CheckTenantAccess;
 use App\Http\Middleware\InitializeTenancyByHeader;
+use App\Http\Middleware\InitializeTenancyBySlugHeader;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -199,3 +201,9 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     Route::apiResource('gastos', GastoController::class);
     Route::apiResource('categorias-gasto', CategoriaGastoController::class);
 });
+
+// Catálogo público — resuelto por header X-Tenant-Slug (Flutter web o app nativa), sin auth
+Route::middleware([InitializeTenancyBySlugHeader::class])
+    ->group(function () {
+        Route::get('catalogo', [CatalogoPublicoController::class, 'index']);
+    });
