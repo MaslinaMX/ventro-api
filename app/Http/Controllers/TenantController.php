@@ -34,7 +34,7 @@ class TenantController extends Controller
         // Eliminar logo anterior si existe
         $current = tenant('logo');
         if ($current) {
-            $oldPath = str_replace(env('CLOUDFLARE_R2_URL').'/', '', $current);
+            $oldPath = str_replace(config('filesystems.disks.r2.url').'/', '', $current);
             Storage::disk('r2')->delete($oldPath);
         }
 
@@ -45,7 +45,7 @@ class TenantController extends Controller
             'r2'
         );
 
-        $url = env('CLOUDFLARE_R2_URL').'/'.$path;
+        $url = config('filesystems.disks.r2.url').'/'.$path;
         tenant()->update(['logo' => $url]);
 
         return response()->json(['logo' => $url]);

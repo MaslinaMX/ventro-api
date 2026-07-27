@@ -27,7 +27,7 @@ class ProductoImagenController extends Controller
 
         Storage::disk('r2')->put($path, file_get_contents($file), 'public');
 
-        $url = env('CLOUDFLARE_R2_URL').'/'.$path;
+        $url = config('filesystems.disks.r2.url').'/'.$path;
 
         // Si es primaria, desmarcar las demás
         if ($request->is_primary) {
@@ -48,7 +48,7 @@ class ProductoImagenController extends Controller
         $imagen = ProductoVarianteImagen::where('variante_id', $varianteId)->findOrFail($id);
 
         // Extraer path relativo para eliminar de R2
-        $relativePath = str_replace(env('CLOUDFLARE_R2_URL').'/', '', $imagen->path);
+        $relativePath = str_replace(config('filesystems.disks.r2.url').'/', '', $imagen->path);
         Storage::disk('r2')->delete($relativePath);
 
         $imagen->delete();
