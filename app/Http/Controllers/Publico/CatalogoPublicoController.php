@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Publico;
 
 use App\Http\Controllers\Controller;
 use App\Models\Producto;
+use App\Models\Sucursal;
 use Illuminate\Http\Request;
 
 /**
@@ -15,6 +16,30 @@ use Illuminate\Http\Request;
  */
 class CatalogoPublicoController extends Controller
 {
+    /**
+     * Info del negocio para el header del catálogo público: nombre, logo,
+     * y datos de contacto de la primera sucursal registrada (dirección,
+     * teléfono, email, sitio web). No expone razón social, RFC, ni plan.
+     */
+    public function negocio(Request $request)
+    {
+        $tenant = tenant();
+        $sucursal = Sucursal::orderBy('id')->first();
+
+        return response()->json([
+            'nombre' => $tenant->name,
+            'logo' => $tenant->logo,
+            'contacto' => $sucursal ? [
+                'direccion' => $sucursal->direccion,
+                'ciudad' => $sucursal->ciudad,
+                'estado' => $sucursal->estado,
+                'telefono' => $sucursal->telefono,
+                'email' => $sucursal->email,
+                'sitio_web' => $sucursal->sitio_web,
+            ] : null,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $productos = Producto::with([

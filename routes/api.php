@@ -206,4 +206,5 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
 Route::middleware([InitializeTenancyBySlugHeader::class])
     ->group(function () {
         Route::get('catalogo', [CatalogoPublicoController::class, 'index']);
+        Route::get('catalogo/negocio', [CatalogoPublicoController::class, 'negocio']);
     });
