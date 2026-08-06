@@ -20,7 +20,7 @@ class InitializeTenancyBySlugHeader
 {
     public function handle(Request $request, Closure $next)
     {
-        $slug = $request->header('X-Tenant-Slug');
+        $slug = $this->resolveSlug($request);
 
         if (! $slug) {
             return response()->json([
@@ -43,5 +43,60 @@ class InitializeTenancyBySlugHeader
         tenancy()->end();
 
         return $response;
+    }
+
+    protected function resolveSlug(Request $request): ?string
+    {
+        $slug = $request->header('X-Tenant-Slug');
+
+        if ($slug) {
+            return strtolower((string) $slug);
+        }
+
+        if (app()->environment(['local', 'testing'])) {
+            $slug = $request->query('tenant')
+                ?? $request->query('slug')
+                ?? $this->resolveSlugFromQuery($request->query())
+                ?? $this->resolveSlugFromHost($request->getHost());
+
+            return $slug ? strtolower((string) $slug) : null;
+        }
+
+        return null;
+    }
+
+    protected function resolveSlugFromQuery(array $query): ?string
+    {
+        if ($query === []) {
+            return null;
+        }
+
+        foreach ($query as $key => $value) {
+            if ($value === null || $value === '') {
+                return strtolower((string) $key);
+            }
+        }
+
+        return null;
+    }
+
+    protected function resolveSlugFromHost(string $host): ?string
+    {
+        $host = strtolower($host);
+        $suffixes = ['.localhost', '.test', '.local', '.lan'];
+
+        foreach ($suffixes as $suffix) {
+            if (! str_ends_with($host, $suffix)) {
+                continue;
+            }
+
+            $slug = substr($host, 0, -strlen($suffix));
+
+            if ($slug !== '' && ! in_array($slug, ['api', 'app', 'www'], true)) {
+                return $slug;
+            }
+        }
+
+        return null;
     }
 }
