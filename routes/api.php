@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Caja\CajaController;
 use App\Http\Controllers\Caja\CorteCajaController;
 use App\Http\Controllers\Caja\SesionCajaController;
+use App\Http\Controllers\Clientes\ClienteController;
 use App\Http\Controllers\ConfiguracionTicketController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Gastos\CategoriaGastoController;
@@ -200,6 +201,9 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     // Gastos. Controllers: GastoController, CategoriaGastoController.
     Route::apiResource('gastos', GastoController::class);
     Route::apiResource('categorias-gasto', CategoriaGastoController::class);
+
+    // Clinetes. Controller: ClienteController.
+    Route::apiResource('clientes', ClienteController::class);
 });
 
 // Catálogo público — resuelto por header X-Tenant-Slug (Flutter web o app nativa), sin auth
