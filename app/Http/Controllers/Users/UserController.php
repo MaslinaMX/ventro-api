@@ -70,7 +70,7 @@ class UserController extends Controller
         ]);
 
         $activationUrl = config('app.frontend_url')
-            .'/#/activar?token='.$inviteToken
+            .'/activar?token='.$inviteToken
             .'&tenant='.tenant('id');
 
         Mail::to($user->email)->send(new UserInvitedMail($user, $activationUrl));
