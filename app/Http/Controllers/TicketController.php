@@ -75,7 +75,7 @@ class TicketController extends Controller
         );
 
         return Pdf::loadView('tickets.venta', [
-            'nombreNegocio' => $tenant->razon_social ?: $tenant->name,
+            'nombreNegocio' => $tenant->name,
             'direccion' => $sucursal->direccion,
             'ciudadEstadoCp' => trim(implode(', ', array_filter([
                 $sucursal->ciudad,
