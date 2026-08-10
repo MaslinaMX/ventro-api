@@ -14,8 +14,9 @@ class UserInvitedMail extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public readonly User $user,
-        public readonly string $activationUrl,
+        public User $user,
+        public string $activationUrl,
+        public string $tenantName,
     ) {}
 
     public function envelope(): Envelope

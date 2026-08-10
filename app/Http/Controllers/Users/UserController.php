@@ -73,7 +73,7 @@ class UserController extends Controller
             .'/activar?token='.$inviteToken
             .'&tenant='.tenant('id');
 
-        Mail::to($user->email)->send(new UserInvitedMail($user, $activationUrl));
+        Mail::to($user->email)->send(new UserInvitedMail($user, $activationUrl, tenant('name')));
 
         return response()->json($this->formatUser($user), 201);
     }

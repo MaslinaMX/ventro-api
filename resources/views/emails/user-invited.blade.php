@@ -92,7 +92,7 @@
         <div class="body">
             <p>Hola, <strong>{{ $user->first_name }}</strong> 👋</p>
             <p>
-                Has sido invitado a unirte a <strong>{{ $user->sucursal?->nombre ?? 'Ventro POS' }}</strong>.
+                Has sido invitado a unirte a <strong>{{ $tenantName }}</strong>.
                 Para activar tu cuenta y establecer tu contraseña, haz clic en el botón:
             </p>
             <a href="{{ $activationUrl }}" class="btn">Activar mi cuenta</a>
@@ -100,7 +100,10 @@
         </div>
         <div class="footer">
             <p>Si no esperabas esta invitación, puedes ignorar este correo.</p>
-            <p>O copia este link en tu navegador:<br><code>{{ $activationUrl }}</code></p>
+            <p>O copia este link en tu navegador:
+                <br><br>
+                <code>{{ $activationUrl }}</code>
+            </p>
         </div>
     </div>
 </body>
