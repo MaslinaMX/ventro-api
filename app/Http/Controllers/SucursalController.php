@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Caja;
 use App\Models\Sucursal;
 use Illuminate\Http\Request;
 
@@ -37,6 +38,14 @@ class SucursalController extends Controller
         ]);
 
         $sucursal = Sucursal::create($data);
+
+        // Toda sucursal nueva nace con una caja default para poder operar de inmediato.
+        Caja::create([
+            'nombre' => 'Caja principal',
+            'sucursal_id' => $sucursal->id,
+            'activa' => true,
+            'is_deletable' => true,
+        ]);
 
         return response()->json($sucursal, 201);
     }

@@ -94,6 +94,9 @@ class CajaController extends Controller
 
         if ($user->isScopedToSucursal()) {
             $query->where('sucursal_id', $user->sucursal_id);
+        } elseif ($sucursalId = $request->query('sucursal_id')) {
+            // admin_empresa: filtra por la sucursal que eligió en el flujo de Venta
+            $query->where('sucursal_id', $sucursalId);
         }
 
         $cajas = $query->with(['sucursal', 'sesionActiva.usuario'])->get();
