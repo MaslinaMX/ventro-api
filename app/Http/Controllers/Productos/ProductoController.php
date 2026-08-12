@@ -8,6 +8,7 @@ use App\Models\ProductoVariante;
 use App\Models\ProductoVariantePrecio;
 use App\Models\ProductoVarianteStock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductoController extends Controller
 {
@@ -189,9 +190,28 @@ class ProductoController extends Controller
 
     public function destroy(int $id)
     {
-        $producto = Producto::findOrFail($id);
-        $producto->update(['activo' => false]);
+        $producto = Producto::with('variantes')->findOrFail($id);
+
+        DB::transaction(function () use ($producto) {
+            $producto->update(['activo' => false]);
+            $producto->variantes()->update(['activo' => false]);
+        });
 
         return response()->json(['message' => 'Producto desactivado.']);
+    }
+
+    public function reactivar(int $productoId, int $id)
+    {
+        $variante = ProductoVariante::where('producto_id', $productoId)->findOrFail($id);
+
+        DB::transaction(function () use ($variante, $productoId) {
+            $variante->update(['activo' => true]);
+
+            Producto::where('id', $productoId)
+                ->where('activo', false)
+                ->update(['activo' => true]);
+        });
+
+        return response()->json($variante->load(['stock', 'precios', 'atributos.atributo']));
     }
 }

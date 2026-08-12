@@ -108,6 +108,8 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     // Productos y categorías. Controllers: ProductoVarianteController, ProductoController, CategoriaController.
     Route::get('/productos/variantes/inactivas', [ProductoVarianteController::class, 'inactivas']);
     Route::apiResource('productos', ProductoController::class);
+    Route::patch('productos/{id}/reactivar', [ProductoController::class, 'reactivar']);
+
     Route::apiResource('categorias', CategoriaController::class);
 
     // Datos del tenant (negocio, logo). Controller: TenantController.

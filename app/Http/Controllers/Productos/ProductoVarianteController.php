@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Productos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\ProductoVariantePrecio;
 use App\Models\ProductoVarianteStock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductoVarianteController extends Controller
 {
@@ -218,7 +220,14 @@ class ProductoVarianteController extends Controller
     public function reactivar(int $productoId, int $id)
     {
         $variante = ProductoVariante::where('producto_id', $productoId)->findOrFail($id);
-        $variante->update(['activo' => true]);
+
+        DB::transaction(function () use ($variante, $productoId) {
+            $variante->update(['activo' => true]);
+
+            Producto::where('id', $productoId)
+                ->where('activo', false)
+                ->update(['activo' => true]);
+        });
 
         return response()->json(
             $variante->load(['stock', 'imagenes', 'precios.lista', 'atributos.atributo'])
