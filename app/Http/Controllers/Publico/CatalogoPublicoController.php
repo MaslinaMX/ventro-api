@@ -66,7 +66,7 @@ class CatalogoPublicoController extends Controller
                 });
             })
             ->when($request->categoria_id, fn ($q) => $q->where('categoria_id', $request->categoria_id))
-            ->paginate(20);
+            ->get();
 
         // Precio calculado (con impuestos) por variante — sin exponer costo ni sku interno
         $productos->each(function ($producto) {
