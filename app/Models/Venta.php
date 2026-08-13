@@ -31,6 +31,11 @@ class Venta extends Model
         'cancelada_en' => 'datetime',
     ];
 
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class);
+    }
+
     public function sesionCaja()
     {
         return $this->belongsTo(SesionCaja::class);

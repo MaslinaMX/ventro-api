@@ -193,7 +193,7 @@ class VentaController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        $venta->load(['items', 'pagos.metodoPago', 'usuario']);
+        $venta->load(['items', 'pagos.metodoPago', 'usuario', 'cliente']);
 
         $tenant = tenant();
         $numeroTicketCompleto = $tenant->codigo_ticket
@@ -257,7 +257,7 @@ class VentaController extends Controller
             $ventas = Venta::where('sesion_caja_id', $caja->sesionActiva->id)
                 ->where('estado', 'completada')
                 ->whereDate('created_at', now()->toDateString())
-                ->with('usuario', 'pagos.metodoPago')
+                ->with('usuario', 'pagos.metodoPago', 'cliente')
                 ->orderByDesc('created_at')
                 ->get();
 
@@ -271,6 +271,7 @@ class VentaController extends Controller
                     'numero_ticket_completo' => tenant()->codigo_ticket.str_pad((string) $v->numero_ticket, 4, '0', STR_PAD_LEFT),
                     'total' => (float) $v->total,
                     'cajero' => $v->usuario->name,
+                    'cliente' => $v->cliente?->nombre ?? 'Público en general',
                     'metodos_pago' => $v->pagos->map(fn ($p) => [
                         'id' => $p->metodoPago->id,
                         'nombre' => $p->metodoPago->nombre,
@@ -300,7 +301,7 @@ class VentaController extends Controller
         $resultado = $cajas->map(function ($caja) {
             $ventas = Venta::where('sesion_caja_id', $caja->sesionActiva->id)
                 ->whereIn('estado', ['completada', 'cancelada'])
-                ->with('usuario', 'pagos.metodoPago', 'devolucion.metodoDevolucion')
+                ->with('usuario', 'pagos.metodoPago', 'devolucion.metodoDevolucion', 'cliente')
                 ->orderByDesc('created_at')
                 ->get();
 
@@ -373,6 +374,7 @@ class VentaController extends Controller
                     'total' => (float) $v->total,
                     'estado' => $v->estado,
                     'cajero' => $v->usuario->name,
+                    'cliente' => $v->cliente?->nombre ?? 'Público en general',
                     'metodos_pago' => $v->pagos->map(fn ($p) => [
                         'id' => $p->metodoPago->id,
                         'nombre' => $p->metodoPago->nombre,
@@ -446,6 +448,7 @@ class VentaController extends Controller
             'pagos.metodoPago',
             'usuario',
             'sesionCaja.caja.sucursal',
+            'cliente',
         ])->findOrFail($id);
 
         $tenant = tenant();
@@ -460,6 +463,7 @@ class VentaController extends Controller
             'cajero' => $venta->usuario->name,
             'caja' => $venta->sesionCaja->caja->nombre,
             'sucursal' => $venta->sesionCaja->caja->sucursal->nombre,
+            'cliente' => $venta->cliente?->nombre ?? 'Público en general',
             'estado' => $venta->estado,
             'subtotal' => (float) $venta->subtotal,
             'descuento' => (float) $venta->descuento,
@@ -576,7 +580,7 @@ class VentaController extends Controller
             return response()->json(['message' => 'No tienes permiso para ver este listado.'], 403);
         }
 
-        $query = Venta::with('usuario', 'pagos.metodoPago', 'sesionCaja.caja.sucursal')
+        $query = Venta::with('usuario', 'pagos.metodoPago', 'sesionCaja.caja.sucursal', 'cliente')
             ->orderByDesc('created_at');
 
         if ($user->isScopedToSucursal()) {
@@ -612,6 +616,7 @@ class VentaController extends Controller
             'total' => (float) $v->total,
             'estado' => $v->estado,
             'cajero' => $v->usuario->name,
+            'cliente' => $v->cliente?->nombre ?? 'Público en general',
             'sucursal' => $v->sesionCaja->caja->sucursal->nombre,
         ]);
 

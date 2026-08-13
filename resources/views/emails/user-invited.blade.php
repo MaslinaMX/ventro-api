@@ -1,111 +1,79 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: -apple-system, sans-serif;
-            background: #f4f4f5;
-            margin: 0;
-            padding: 40px 0;
-        }
-
-        .card {
-            background: #ffffff;
-            max-width: 520px;
-            margin: 0 auto;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .header {
-            background: #18181b;
-            padding: 32px;
-            text-align: center;
-        }
-
-        .header h1 {
-            color: #ffffff;
-            font-size: 22px;
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .header span {
-            color: #7c3aed;
-        }
-
-        .body {
-            padding: 36px 32px;
-        }
-
-        .body p {
-            color: #52525b;
-            font-size: 15px;
-            line-height: 1.6;
-            margin: 0 0 16px;
-        }
-
-        .body strong {
-            color: #18181b;
-        }
-
-        .btn {
-            display: block;
-            background: #7c3aed;
-            color: #ffffff !important;
-            text-decoration: none;
-            text-align: center;
-            padding: 14px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 15px;
-            margin: 28px 0;
-        }
-
-        .footer {
-            padding: 0 32px 32px;
-        }
-
-        .footer p {
-            color: #a1a1aa;
-            font-size: 12px;
-            line-height: 1.5;
-            margin: 0;
-        }
-
-        .footer code {
-            background: #f4f4f5;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-    </style>
+    <meta charset="utf-8">
 </head>
 
-<body>
-    <div class="card">
-        <div class="header">
-            <h1><span>Ventro</span> POS</h1>
-        </div>
-        <div class="body">
-            <p>Hola, <strong>{{ $user->first_name }}</strong> 👋</p>
-            <p>
-                Has sido invitado a unirte a <strong>{{ $tenantName }}</strong>.
-                Para activar tu cuenta y establecer tu contraseña, haz clic en el botón:
-            </p>
-            <a href="{{ $activationUrl }}" class="btn">Activar mi cuenta</a>
-            <p>Este enlace expira en <strong>72 horas</strong>.</p>
-        </div>
-        <div class="footer">
-            <p>Si no esperabas esta invitación, puedes ignorar este correo.</p>
-            <p>O copia este link en tu navegador:
-                <br><br>
-                <code>{{ $activationUrl }}</code>
-            </p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Helvetica Neue', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+        style="background-color: #f4f4f5; padding: 32px 16px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                    style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #2A9D7F; padding: 32px 32px 28px; text-align: center;">
+                            <div
+                                style="width: 48px; height: 48px; background-color: rgba(255,255,255,0.15); border-radius: 12px; margin: 0 auto 16px; line-height: 48px; text-align: center;">
+                                <span style="font-size: 22px;">👋</span>
+                            </div>
+                            <p style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 700;">
+                                Bienvenido a Ventro
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 32px;">
+                            <p style="margin: 0 0 24px; color: #52525b; font-size: 15px; line-height: 1.6;">
+                                Hola, <strong style="color: #18181b;">{{ $user->first_name }}</strong> — has sido
+                                invitado
+                                a unirte a <strong style="color: #18181b;">{{ $tenantName }}</strong>. Para activar tu
+                                cuenta y establecer tu contraseña, haz clic en el botón:
+                            </p>
+
+                            <!-- CTA -->
+                            <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px;">
+                                <tr>
+                                    <td style="background-color: #2A9D7F; border-radius: 10px;">
+                                        <a href="{{ $activationUrl }}"
+                                            style="display: inline-block; padding: 14px 24px; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none;">
+                                            Activar mi cuenta
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 12px; line-height: 1.6;">
+                                Este enlace expira en <strong style="color: #71717a;">72 horas</strong>. Si no esperabas
+                                esta invitación, puedes ignorar este correo.
+                            </p>
+
+                            <p style="margin: 0; color: #a1a1aa; font-size: 12px; line-height: 1.6;">
+                                O copia y pega este enlace en tu navegador:<br>
+                                <span style="color: #2A9D7F; word-break: break-all;">{{ $activationUrl }}</span>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px 32px; border-top: 1px solid #f0f0f0; text-align: center;">
+                            <p style="margin: 0; color: #a1a1aa; font-size: 12px;">
+                                Enviado con <a style="text-decoration: none;" href="https://www.ventro.com.mx"><strong
+                                        style="color: #71717a;">Ventro</strong></a>
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

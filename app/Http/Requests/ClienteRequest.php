@@ -14,7 +14,7 @@ class ClienteRequest extends FormRequest
 
     public function rules(): array
     {
-        $clienteId = $this->route('id');
+        $clienteId = $this->route('cliente');
 
         return [
             'nombre' => ['required', 'string', 'max:255'],

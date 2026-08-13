@@ -206,6 +206,7 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
 
     // Clinetes. Controller: ClienteController.
     Route::apiResource('clientes', ClienteController::class);
+    Route::get('clientes/{cliente}/estadisticas', [ClienteController::class, 'estadisticas']);
 });
 
 // Catálogo público — resuelto por header X-Tenant-Slug (Flutter web o app nativa), sin auth

@@ -54,6 +54,19 @@
             border-top-color: #e8e8e8;
         }
 
+        .cliente-info {
+            text-align: center;
+            color: #555;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+
+        .cliente-info .label {
+            color: #999;
+            font-size: 9px;
+            letter-spacing: 0.4px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -162,6 +175,11 @@
                 <div>TEL: {{ $telefono }}</div>
             @endif
         </div>
+    </div>
+
+    <div class="cliente-info">
+        <span class="label">CLIENTE</span><br>
+        {{ strtoupper($clienteNombre) }}
     </div>
 
     <div class="dashed"></div>

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Clientes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClienteRequest;
 use App\Models\Cliente;
+use App\Models\Venta;
+use App\Models\VentaItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -88,5 +90,53 @@ class ClienteController extends Controller
         $modelo->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function estadisticas(int $cliente): JsonResponse
+    {
+        $modelo = Cliente::findOrFail($cliente);
+
+        $ventasCompletadas = Venta::where('cliente_id', $cliente)
+            ->where('estado', 'completada')
+            ->get();
+
+        $numeroCompras = $ventasCompletadas->count();
+        $totalGastado = round((float) $ventasCompletadas->sum('total'), 2);
+        $promedioCompra = $numeroCompras > 0 ? round($totalGastado / $numeroCompras, 2) : 0;
+        $ultimaCompra = $ventasCompletadas->max('created_at');
+
+        // Producto favorito: el nombre_snapshot con más unidades vendidas
+        // entre los items de las ventas completadas de este cliente.
+        $productoFavorito = VentaItem::whereIn('venta_id', $ventasCompletadas->pluck('id'))
+            ->selectRaw('nombre_snapshot, SUM(cantidad) as total_cantidad')
+            ->groupBy('nombre_snapshot')
+            ->orderByDesc('total_cantidad')
+            ->first();
+
+        // Lista completa de compras (incluye canceladas, para historial fiel)
+        $todasLasVentas = Venta::where('cliente_id', $cliente)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $tenant = tenant();
+
+        return response()->json([
+            'cliente' => [
+                'id' => $modelo->id,
+                'nombre' => $modelo->nombre,
+            ],
+            'total_gastado' => $totalGastado,
+            'numero_compras' => $numeroCompras,
+            'promedio_compra' => $promedioCompra,
+            'ultima_compra' => $ultimaCompra?->format('d/m/Y H:i'),
+            'producto_favorito' => $productoFavorito?->nombre_snapshot,
+            'compras' => $todasLasVentas->map(fn ($v) => [
+                'id' => $v->id,
+                'numero_ticket_completo' => $tenant->codigo_ticket.str_pad((string) $v->numero_ticket, 4, '0', STR_PAD_LEFT),
+                'fecha' => $v->created_at->format('d/m/Y H:i'),
+                'total' => (float) $v->total,
+                'estado' => $v->estado,
+            ]),
+        ]);
     }
 }

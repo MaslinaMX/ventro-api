@@ -20,7 +20,7 @@ class TicketController extends Controller
      */
     private function construirPdf(Venta $venta, bool $esReimpresion = false): \Barryvdh\DomPDF\PDF
     {
-        $venta->load(['items', 'pagos.metodoPago', 'usuario', 'sesionCaja.caja.sucursal']);
+        $venta->load(['items', 'pagos.metodoPago', 'usuario', 'sesionCaja.caja.sucursal', 'cliente']);
 
         $tenant = tenant();
         $config = ConfiguracionTicket::obtener();
@@ -86,6 +86,7 @@ class TicketController extends Controller
             'telefono' => $sucursal->telefono,
             'mostrarLogo' => $config->mostrar_logo,
             'logoBase64' => $logoBase64,
+            'clienteNombre' => $venta->cliente?->nombre ?? 'Público en general',
             'items' => $items,
             'subtotal' => (float) $venta->subtotal,
             'totalBruto' => $totalBruto,
