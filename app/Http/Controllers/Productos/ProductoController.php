@@ -43,7 +43,7 @@ class ProductoController extends Controller
             })
             ->when($request->categoria_id, fn ($q) => $q->where('categoria_id', $request->categoria_id))
             ->when($request->activo !== null, fn ($q) => $q->where('activo', $request->activo))
-            ->paginate(20);
+            ->get();
 
         // Agregar precio calculado a cada variante
         $productos->each(function ($producto) {
