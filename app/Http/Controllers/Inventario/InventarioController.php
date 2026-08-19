@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Inventario;
 use App\Http\Controllers\Controller;
 use App\Models\MovimientoInventario;
 use App\Models\ProductoVariante;
+use App\Models\Sucursal;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -20,8 +22,43 @@ class InventarioController extends Controller
      */
     public function stockPorSucursal(Request $request, int $sucursal)
     {
+        $rows = $this->buildStockQuery($sucursal, $request->query('search'))
+            ->get()
+            ->map(fn ($row) => $this->normalizarFilaStock($row));
+
+        return response()->json($rows);
+    }
+
+    /**
+     * GET /api/inventario/sucursales/{sucursal}/stock/pdf
+     *
+     * Genera un PDF con el inventario actual de la sucursal, respetando
+     * el mismo filtro de búsqueda que la vista en pantalla.
+     */
+    public function stockPorSucursalPdf(Request $request, int $sucursal)
+    {
         $search = $request->query('search');
 
+        $rows = $this->buildStockQuery($sucursal, $search)
+            ->get()
+            ->map(fn ($row) => $this->normalizarFilaStock($row));
+
+        $sucursalNombre = Sucursal::find($sucursal)?->nombre ?? 'Sucursal';
+
+        $pdf = Pdf::loadView('inventario.stock-actual-pdf', [
+            'rows' => $rows,
+            'sucursalNombre' => $sucursalNombre,
+            'search' => $search,
+            'fechaGeneracion' => now()->format('d/m/Y H:i'),
+        ])->setPaper('letter');
+
+        $filename = 'inventario-'.str($sucursalNombre)->slug().'-'.now()->format('Ymd-His').'.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    private function buildStockQuery(int $sucursal, ?string $search)
+    {
         $query = ProductoVariante::query()
             ->select([
                 'producto_variantes.id as variante_id',
@@ -50,19 +87,16 @@ class InventarioController extends Controller
             });
         }
 
-        $rows = $query
-            ->orderBy('productos.nombre')
-            ->orderBy('producto_variantes.nombre')
-            ->get()
-            ->map(function ($row) {
-                $row->cantidad = $row->cantidad ?? 0;
-                $row->cantidad_minima = $row->cantidad_minima ?? 0;
-                $row->bajo_stock = (float) $row->cantidad <= (float) $row->cantidad_minima;
+        return $query->orderBy('productos.nombre')->orderBy('producto_variantes.nombre');
+    }
 
-                return $row;
-            });
+    private function normalizarFilaStock($row)
+    {
+        $row->cantidad = $row->cantidad ?? 0;
+        $row->cantidad_minima = $row->cantidad_minima ?? 0;
+        $row->bajo_stock = (float) $row->cantidad <= (float) $row->cantidad_minima;
 
-        return response()->json($rows);
+        return $row;
     }
 
     /**

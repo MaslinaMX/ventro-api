@@ -192,6 +192,7 @@ Route::middleware([InitializeTenancyByHeader::class, AuthenticateTenant::class, 
     Route::prefix('inventario')->group(function () {
         Route::get('sucursales/{sucursal}/stock', [InventarioController::class, 'stockPorSucursal']);
         Route::get('sucursales/{sucursal}/movimientos', [InventarioController::class, 'movimientosPorSucursal']);
+        Route::get('sucursales/{sucursal}/stock/pdf', [InventarioController::class, 'stockPorSucursalPdf']);
         Route::get('variantes/{variante}/movimientos', [InventarioController::class, 'movimientosPorVariante']);
         Route::post('movimientos', [InventarioController::class, 'registrarMovimiento']);
         Route::post('transferencias', [InventarioController::class, 'transferir']);
